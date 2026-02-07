@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOGICWORKX | DIGITAL ASSET CONFIGURATOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
+
+        /* --- Industrial Theme Setup --- */
+        :root {
+            --bg-base: #0a0a0a;
+            --panel-bg: #111;
+            --border-color: #222;
+            
+            /* Lime Green Theme Palette */
+            --lime-glow: #bef264;   /* High vis */
+            --lime-mid: #84cc16;    /* Base accent */
+            --lime-dim: #4d7c0f;    /* Borders/Muted */
+            --lime-dark: #365314;   /* Backgrounds */
+            --text-muted: #575757;
+            --hud-corner-size: 30px;
+        }
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: var(--bg-base); 
+            color: #ccc; 
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Background Canvas for Magnified View */
+        #bg-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -10;
+            filter: blur(15px) brightness(0.2) saturate(0) sepia(1) hue-rotate(60deg); 
+            pointer-events: none;
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+
+        /* --- Typography & Labels --- */
+        .header-text { 
+            font-weight: 900; 
+            letter-spacing: 0.05em; 
+            font-size: 14px;
+            background: linear-gradient(90deg, #ecfccb 0%, #84cc16 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 0px 10px rgba(132, 204, 22, 0.3);
+        }
+        
+        .header-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--lime-dim);
+            color: var(--lime-glow);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            width: 140px;
+            text-transform: uppercase;
+            outline: none;
+            transition: all 0.2s;
+            padding: 0;
+        }
+        .header-input:focus, .header-input:hover {
+            border-bottom-color: var(--lime-glow);
+            color: #fff;
+            text-shadow: 0 0 8px var(--lime-mid);
+        }
+        .header-input::placeholder { color: var(--lime-dim); }
+
+        .label-panel { font-size: 11px; font-weight: 700; color: var(--lime-mid); letter-spacing: 0.05em; text-transform: uppercase; }
+        .label-sm { font-size: 9px; font-weight: 600; letter-spacing: 0.15em; color: #556; text-transform: uppercase; }
+        
+        .vertical-text-right {
+            position: absolute; right: 20px; top: 120px;
+            writing-mode: vertical-rl; text-orientation: mixed;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.2em;
+            color: var(--lime-dark); user-select: none; z-index: -1;
+        }
+        
+        .vertical-text-left {
+            position: absolute; left: 20px; bottom: 40px;
+            writing-mode: vertical-rl; text-orientation: mixed;
+            transform: rotate(180deg);
+            font-size: 42px; font-weight: 900; letter-spacing: 0.05em;
+            color: rgba(132, 204, 22, 0.05); text-shadow: none; user-select: none;
+            line-height: 1; z-index: -1;
+        }
+
+        /* --- Main Layout --- */
+        .interface-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+            padding: 1.5rem 2rem 1.5rem 2rem;
+            flex: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        .panel-container {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Octagonal HUD Viewer --- */
+        #container-3d-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(132, 204, 22, 0.1));
+        }
+
+        #container-3d-border {
+            position: absolute;
+            inset: 0;
+            background: var(--lime-dark);
+            clip-path: polygon(
+                var(--hud-corner-size) 0, 
+                calc(100% - var(--hud-corner-size)) 0, 
+                100% var(--hud-corner-size), 
+                100% calc(100% - var(--hud-corner-size)), 
+                calc(100% - var(--hud-corner-size)) 100%, 
+                var(--hud-corner-size) 100%, 
+                0 calc(100% - var(--hud-corner-size)), 
+                0 var(--hud-corner-size)
+            );
+            z-index: 0;
+        }
+
+        #container-3d {
+            position: absolute;
+            inset: 2px;
+            background: #050505;
+            clip-path: polygon(
+                var(--hud-corner-size) 0, 
+                calc(100% - var(--hud-corner-size)) 0, 
+                100% var(--hud-corner-size), 
+                100% calc(100% - var(--hud-corner-size)), 
+                calc(100% - var(--hud-corner-size)) 100%, 
+                var(--hud-corner-size) 100%, 
+                0 calc(100% - var(--hud-corner-size)), 
+                0 var(--hud-corner-size)
+            );
+            z-index: 1;
+        }
+
+        #canvas-wrapper { width: 100%; height: 100%; position: relative; }
+        canvas { outline: none; }
+
+        /* HUD Overlay Elements */
+        .hud-reticle {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px; height: 40px;
+            border: 1px solid rgba(132, 204, 22, 0.3);
+            pointer-events: none;
+            z-index: 20;
+        }
+        .hud-reticle::before, .hud-reticle::after {
+            content: ''; position: absolute; background: rgba(132, 204, 22, 0.5);
+        }
+        .hud-reticle::before { width: 100%; height: 1px; top: 50%; left: 0; }
+        .hud-reticle::after { width: 1px; height: 100%; top: 0; left: 50%; }
+
+        .hud-corner-tl { position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; border-top: 2px solid var(--lime-mid); border-left: 2px solid var(--lime-mid); z-index: 20; pointer-events: none; }
+        .hud-corner-br { position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border-bottom: 2px solid var(--lime-mid); border-right: 2px solid var(--lime-mid); z-index: 20; pointer-events: none; }
+
+        /* --- Thinner Control Panel --- */
+        #container-controls {
+            height: 100%;
+            background: rgba(15, 15, 15, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-left: 1px solid rgba(132, 204, 22, 0.1);
+            border-radius: 4px;
+        }
+
+        /* --- UI Elements --- */
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--lime-dark); border-radius: 3px; }
+
+        .btn-industrial {
+            background: rgba(132, 204, 22, 0.05); border: 1px solid var(--lime-dark); color: #888;
+            font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            padding: 6px 10px; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%;
+        }
+        .btn-industrial:hover { background: var(--lime-dark); border-color: var(--lime-mid); color: #fff; box-shadow: 0 0 10px rgba(132, 204, 22, 0.2); }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 1rem; }
+        
+        .btn-mode { 
+            background: #0a0a0a; border: 1px solid #333; color: #666;
+            font-size: 8px; font-weight: 700; padding: 4px; cursor: pointer; text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .btn-mode.active { background: var(--lime-mid); color: #000; border-color: var(--lime-glow); font-weight: 900; }
+
+        .slider-industrial {
+            -webkit-appearance: none; width: 100%; height: 2px; background: #222; outline: none; margin-top: 8px; margin-bottom: 8px;
+        }
+        .slider-industrial::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 8px; height: 8px; background: var(--lime-mid); border-radius: 0; cursor: pointer; transition: 0.2s;
+        }
+        .slider-industrial::-webkit-slider-thumb:hover { background: var(--lime-glow); transform: scale(1.5); box-shadow: 0 0 5px var(--lime-glow); }
+
+        .slot-row {
+            background: rgba(0,0,0,0.3); border-bottom: 1px solid #222;
+            transition: all 0.2s; border-left: 2px solid transparent;
+            padding: 8px;
+        }
+        .slot-row.active { border-left: 2px solid var(--lime-mid); background: rgba(132, 204, 22, 0.05); }
+        .slot-row:hover { background: rgba(132, 204, 22, 0.02); }
+        
+        .hidden-input { display: none; }
+        .dropdown-menu { display: none; position: absolute; background: #0f0f0f; border: 1px solid var(--lime-dark); z-index: 50; width: 100%; max-height: 200px; overflow-y: auto; top: 100%; left: 0; }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item { padding: 6px 8px; font-size: 9px; color: #888; cursor: pointer; border-bottom: 1px solid #222; }
+        .dropdown-item:hover { background: var(--lime-dark); color: var(--lime-glow); }
+
+        .stat-box { background: rgba(0,0,0,0.3); border: 1px solid #222; padding: 6px; text-align: center; }
+        .stat-val { font-family: monospace; font-size: 10px; color: var(--lime-glow); font-weight: 700; }
+
+        @keyframes green-pulse {
+            0%, 100% { background-color: var(--lime-mid); box-shadow: 0 0 5px var(--lime-mid); }
+            50% { background-color: var(--lime-glow); box-shadow: 0 0 12px var(--lime-glow); }
+        }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; animation: green-pulse 2s infinite; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Renderer Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Header Strip -->
+    <header class="w-full h-10 flex items-center justify-between px-6 border-b border-[#222] bg-[#0d0d0d] z-10">
+        <div class="flex items-center gap-4">
+            <span class="header-text">PROFILE</span>
+            <span class="text-[#333]">/</span>
+            <input type="text" id="input-asset-name" class="header-input" value="DIGITAL ASSET" placeholder="ASSET NAME">
+            <span class="text-[#333]">/</span>
+            <input type="text" id="input-persona-name" class="header-input" value="PERSONA" placeholder="PERSONA ID">
+        </div>
+        <div class="header-text" style="font-size: 10px; opacity: 0.8; letter-spacing: 0.2em;">MAGNIFIED VIEWER</div>
+    </header>
+
+    <!-- Side Decor -->
+    <div class="vertical-text-right">LOGICWORKX</div>
+    <div class="vertical-text-left">SYSTEM</div>
+
+    <!-- Main Grid Layout -->
+    <main class="interface-grid">
+        
+        <!-- CONTAINER 1: OCTAGONAL HUD VIEWER -->
+        <section id="container-3d-wrapper">
+            <div id="container-3d-border"></div>
+            
+            <div id="container-3d">
+                <div id="canvas-wrapper">
+                    <!-- 3D Canvas injects here -->
+                </div>
+
+                <div class="hud-reticle"></div>
+                <div class="hud-corner-tl"></div>
+                <div class="hud-corner-br"></div>
+                
+                <div class="absolute bottom-6 left-0 w-full text-center pointer-events-none z-20">
+                    <span class="label-panel" style="text-shadow: 0 2px 4px #000;">ROTATING ASSET DISPLAY: <span id="model-name-display" style="color: var(--lime-glow);">NONE</span></span>
+                </div>
+
+                <div id="loader-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-[#000] z-30 transition-opacity duration-500">
+                    <div class="w-6 h-6 border-2 border-[#222] border-t-[var(--lime-mid)] rounded-full animate-spin mb-3"></div>
+                    <span class="label-sm" style="color: var(--lime-mid);">INITIALIZING</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTAINER 2: THIN CONTROLS SIDEBAR -->
+        <section id="container-controls" class="flex flex-col">
+            
+            <div class="flex justify-between items-center mb-4 border-b border-[#222] pb-2">
+                <span class="label-panel">CONTROLS</span>
+                <div class="status-dot"></div>
+            </div>
+
+            <div class="flex-1 flex flex-col gap-4 overflow-hidden">
+                
+                <!-- Actions -->
+                <div class="btn-group">
+                    <button id="btn-import" class="btn-industrial">IMPORT</button>
+                    <button id="btn-demo" class="btn-industrial">DEMO</button>
+                    <button id="btn-config" class="btn-industrial">LOAD CFG</button>
+                    <button id="btn-export" class="btn-industrial hidden" style="border-color: var(--lime-mid); color: var(--lime-glow);">SAVE CFG</button>
+                </div>
+
+                <!-- Environment & FX (NEW) -->
+                <div class="bg-black/20 p-2 border border-[#222]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="label-sm">ENVIRONMENT & FX</span>
+                        <button onclick="toggleEnvMode()" id="btn-env-mode" class="text-[8px] font-bold px-2 py-0.5 bg-[#222] text-[#888] hover:text-white rounded border border-[#333]">STUDIO</button>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[8px] text-[#555] font-mono">BLOOM</span>
+                        <input type="range" class="slider-industrial w-20" min="0" max="3" step="0.1" value="1.5" oninput="updateBloom(this.value)">
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[8px] text-[#555] font-mono">ENV INT</span>
+                        <input type="range" class="slider-industrial w-20" min="0" max="2" step="0.1" value="1.0" oninput="updateEnvIntensity(this.value)">
+                    </div>
+                    <div class="flex gap-1 mt-2">
+                        <button id="btn-env-load" class="btn-industrial text-[8px] flex-1">LOAD MAP (EXR/HDR/JPG)</button>
+                    </div>
+                </div>
+
+                <!-- Shader Modes -->
+                <div class="bg-black/20 p-2 border border-[#222]">
+                    <div class="label-sm mb-2">RENDER MODE</div>
+                    <div class="grid grid-cols-3 gap-1">
+                        <button onclick="setRenderMode('pbr')" id="mode-pbr" class="btn-mode active">PBR</button>
+                        <button onclick="setRenderMode('toon')" id="mode-toon" class="btn-mode">TOON</button>
+                        <button onclick="setRenderMode('wire')" id="mode-wire" class="btn-mode">WIRE</button>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="stat-box">
+                        <div class="label-sm mb-1">VERTS</div>
+                        <div id="poly-count" class="stat-val">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label-sm mb-1">CLIPS</div>
+                        <div id="clip-count" class="stat-val">0</div>
+                    </div>
+                </div>
+                
+                <!-- Transform Block -->
+                <div class="bg-black/20 p-2 border border-[#222]">
+                    <div class="flex justify-between items-center">
+                        <span class="label-sm">SCALE</span>
+                        <span id="val-scale" class="text-[9px] font-mono text-[#888]">1.0</span>
+                    </div>
+                    <input type="range" id="inp-scale" class="slider-industrial" min="0.1" max="3.0" step="0.1" value="1.0">
+                    
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="label-sm">OFFSET Y</span>
+                        <span id="val-offset" class="text-[9px] font-mono text-[#888]">0.0</span>
+                    </div>
+                    <input type="range" id="inp-offset" class="slider-industrial" min="-5" max="5" step="0.1" value="0">
+                </div>
+
+                <!-- Library List -->
+                <div class="flex-1 bg-black/20 border border-[#222] flex flex-col min-h-0">
+                    <div class="p-2 border-b border-[#222] bg-[#0a0a0a]">
+                        <span class="label-sm">SEQUENCES</span>
+                    </div>
+                    <div id="library-list" class="flex-1 overflow-y-auto custom-scrollbar p-1 space-y-1">
+                        <!-- Items injected here -->
+                        <div class="text-[9px] text-[#444] italic p-2 text-center">Empty Library</div>
+                    </div>
+                </div>
+
+                <!-- Mixer Slots -->
+                <div class="bg-black/20 border border-[#222]">
+                    <div class="p-2 border-b border-[#222] bg-[#0a0a0a] flex justify-between">
+                        <span class="label-sm">MIXER</span>
+                    </div>
+                    <div id="slots-wrapper" class="max-h-[160px] overflow-y-auto custom-scrollbar">
+                        <!-- Slots injected via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Label inside Panel -->
+            <div class="mt-4 pt-2 border-t border-[#222] flex justify-between items-center">
+                <span id="status-msg" class="text-[9px] font-mono text-[#888] truncate w-full" style="color: var(--lime-mid);">SYSTEM READY</span>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Hidden File Inputs -->
+    <input type="file" id="file-in-asset" class="hidden-input" accept=".glb,.gltf,.fbx">
+    <input type="file" id="file-in-config" class="hidden-input" accept=".json">
+    <input type="file" id="file-in-env" class="hidden-input" accept=".jpg,.jpeg,.png,.exr,.hdr">
+
+    <!-- Logic Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
+    
+    <!-- Environment Loaders -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/EXRLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+    
+    <!-- Post Processing -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <script>
+        /* --- Engine Variables --- */
+        let scene, camera, renderer, bgRenderer, bgCamera;
+        let composer, bloomPass;
+        let controls, mixer, clock;
+        let container3D;
+        let currentModel = null;
+        let animations = [];
+        let slotActions = [null, null, null, null];
+        let activeFileName = "NONE";
+        
+        let originalMaterials = new Map();
+        let currentMode = 'pbr';
+        let toonGradientTexture = null;
+        
+        // Environment vars
+        let envMode = 'studio'; // or 'cyber' or 'custom'
+        let pmremGenerator;
+        let roomEnvironmentTexture;
+        let cyberEnvironmentTexture;
+
+        const settings = {
+            scale: 1.0,
+            offset: 0.0,
+            rotY: 0,
+            envIntensity: 1.0
+        };
+
+        const scanUniforms = {
+            uTime: { value: 0 },
+            uScanColor: { value: new THREE.Color(0x84cc16) }, 
+            uScanMin: { value: -5.0 },
+            uScanMax: { value: 5.0 }
+        };
+
+        /* --- Initialization --- */
+        function init() {
+            container3D = document.getElementById('canvas-wrapper');
+            scene = new THREE.Scene();
+            
+            // Camera
+            const aspect = container3D.clientWidth / container3D.clientHeight;
+            camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+            camera.position.set(3, 2, 5);
+
+            // Main Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container3D.clientWidth, container3D.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            renderer.physicallyCorrectLights = true;
+            renderer.setClearColor(0x000000, 0); 
+            container3D.appendChild(renderer.domElement);
+
+            // --- Post Processing (Bloom) ---
+            const renderScene = new THREE.RenderPass(scene, camera);
+            
+            bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0;
+            bloomPass.strength = 1.5; // Default High
+            bloomPass.radius = 0.5;
+
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            // --- PBR Environments ---
+            pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+            
+            // 1. Studio Room
+            const roomEnvironment = new THREE.RoomEnvironment();
+            roomEnvironmentTexture = pmremGenerator.fromScene(roomEnvironment).texture;
+            
+            // 2. Cyber Procedural Skybox
+            createCyberEnvironment();
+
+            // Set Default Env
+            scene.environment = roomEnvironmentTexture;
+
+            // Generate Toon Gradient
+            toonGradientTexture = generateToonGradient();
+
+            // --- Background Renderer ---
+            const bgCanvas = document.getElementById('bg-canvas');
+            bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, antialias: false, alpha: false });
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            bgRenderer.setPixelRatio(window.devicePixelRatio * 0.5);
+            bgRenderer.outputEncoding = THREE.sRGBEncoding;
+            bgCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            bgCamera.position.set(1.5, 1, 2.5);
+
+            // --- Lighting ---
+            const ambient = new THREE.AmbientLight(0xffffff, 0.2);
+            scene.add(ambient);
+
+            const lights = [
+                { x: 5, y: 6, z: 5, i: 8 },
+                { x: -5, y: 6, z: 5, i: 8 },
+                { x: 5, y: 3, z: -5, i: 5 },
+                { x: -5, y: 3, z: -5, i: 5 }
+            ];
+            lights.forEach(l => {
+                const light = new THREE.PointLight(0xffffff, l.i, 40); 
+                light.position.set(l.x, l.y, l.z);
+                light.castShadow = true;
+                light.shadow.bias = -0.0001;
+                light.shadow.mapSize.width = 1024;
+                light.shadow.mapSize.height = 1024;
+                scene.add(light);
+            });
+
+            const grid = new THREE.GridHelper(20, 20, 0x333333, 0x111111);
+            scene.add(grid);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 1.0;
+
+            clock = new THREE.Clock();
+
+            // Event Listeners
+            window.addEventListener('resize', onResize);
+            document.getElementById('btn-import').onclick = () => document.getElementById('file-in-asset').click();
+            document.getElementById('btn-config').onclick = () => document.getElementById('file-in-config').click();
+            document.getElementById('btn-env-load').onclick = () => document.getElementById('file-in-env').click();
+            document.getElementById('btn-export').onclick = exportConfig;
+            document.getElementById('btn-demo').onclick = loadDemo;
+            
+            document.getElementById('file-in-asset').onchange = handleAssetUpload;
+            document.getElementById('file-in-config').onchange = handleConfigUpload;
+            document.getElementById('file-in-env').onchange = handleEnvUpload;
+            
+            document.getElementById('input-asset-name').addEventListener('input', updateOverlayText);
+            document.getElementById('input-persona-name').addEventListener('input', updateOverlayText);
+
+            bindInputs();
+            initSlotsUI();
+            animate();
+            
+            setTimeout(() => {
+                document.getElementById('loader-overlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 500);
+            }, 1000);
+        }
+
+        /* --- Environment Logic --- */
+        function createCyberEnvironment() {
+            const envScene = new THREE.Scene();
+            envScene.background = new THREE.Color(0x050505);
+            
+            // Grid Floor
+            const grid = new THREE.GridHelper(20, 40, 0x00ff00, 0x004400);
+            envScene.add(grid);
+            
+            // Distant Lights
+            const light1 = new THREE.PointLight(0x00ffcc, 2, 100);
+            light1.position.set(10, 10, 10);
+            envScene.add(light1);
+            
+            const light2 = new THREE.PointLight(0xff00ff, 2, 100);
+            light2.position.set(-10, 0, -10);
+            envScene.add(light2);
+
+            cyberEnvironmentTexture = pmremGenerator.fromScene(envScene).texture;
+        }
+
+        window.toggleEnvMode = function() {
+            const btn = document.getElementById('btn-env-mode');
+            if(envMode === 'studio') {
+                envMode = 'cyber';
+                scene.environment = cyberEnvironmentTexture;
+                // Optional: Change background color slightly to match
+                // scene.background = new THREE.Color(0x020205);
+                btn.innerText = "CYBER";
+                btn.style.color = "var(--lime-glow)";
+                btn.style.borderColor = "var(--lime-glow)";
+            } else {
+                envMode = 'studio';
+                scene.environment = roomEnvironmentTexture;
+                // scene.background = null; // Transparent
+                btn.innerText = "STUDIO";
+                btn.style.color = "#888";
+                btn.style.borderColor = "#333";
+            }
+        };
+
+        function handleEnvUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            loadEnvironmentMap(url, file.name);
+        }
+
+        function loadEnvironmentMap(url, name) {
+            const ext = name.split('.').pop().toLowerCase();
+            let loader;
+
+            if (ext === 'exr') {
+                loader = new THREE.EXRLoader();
+                loader.setDataType(THREE.UnsignedByteType); 
+            } else if (ext === 'hdr') {
+                loader = new THREE.RGBELoader();
+                loader.setDataType(THREE.UnsignedByteType);
+            } else {
+                loader = new THREE.TextureLoader();
+            }
+
+            loader.load(url, (texture) => {
+                if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+                    texture.encoding = THREE.sRGBEncoding;
+                }
+                
+                const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                
+                scene.background = envMap;
+                scene.environment = envMap;
+                texture.dispose();
+
+                envMode = 'custom';
+                const btn = document.getElementById('btn-env-mode');
+                btn.innerText = "CUSTOM";
+                btn.style.color = "#fff";
+                btn.style.borderColor = "#fff";
+                
+                document.getElementById('status-msg').innerText = `ENV: ${name.toUpperCase()}`;
+            });
+        }
+
+        window.updateBloom = function(val) {
+            if(bloomPass) bloomPass.strength = parseFloat(val);
+        };
+
+        window.updateEnvIntensity = function(val) {
+            settings.envIntensity = parseFloat(val);
+            scene.traverse(child => {
+                if(child.isMesh && child.material && child.material.envMapIntensity !== undefined) {
+                    child.material.envMapIntensity = settings.envIntensity;
+                }
+            });
+        };
+
+        // --- Toon Gradient Generator ---
+        function generateToonGradient() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 4;
+            canvas.height = 1;
+            const context = canvas.getContext('2d');
+            const gradient = context.createLinearGradient(0, 0, 4, 0);
+            gradient.addColorStop(0, '#444'); 
+            gradient.addColorStop(0.5, '#aaa'); 
+            gradient.addColorStop(1, '#fff'); 
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 4, 1);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        // --- Mode Switching Logic ---
+        window.setRenderMode = function(mode) {
+            currentMode = mode;
+            ['pbr', 'toon', 'wire'].forEach(m => {
+                const btn = document.getElementById(`mode-${m}`);
+                if(m === mode) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            if(!currentModel) return;
+
+            if(mode === 'pbr') {
+                restorePBR();
+                setupScanShader(currentModel); 
+            } else if(mode === 'toon') {
+                applyToonShader();
+            } else if(mode === 'wire') {
+                applyWireframeOverlay();
+            }
+        };
+
+        function restorePBR() {
+            currentModel.traverse(child => {
+                if (child.isMesh) {
+                    if(originalMaterials.has(child.uuid)) {
+                        child.material = originalMaterials.get(child.uuid);
+                        // Re-apply environment intensity
+                        child.material.envMapIntensity = settings.envIntensity;
+                    }
+                    const wire = child.children.find(c => c.name === '__wireframe_overlay');
+                    if(wire) wire.visible = false;
+                }
+            });
+        }
+
+        function applyToonShader() {
+            currentModel.traverse(child => {
+                if (child.isMesh) {
+                    const wire = child.children.find(c => c.name === '__wireframe_overlay');
+                    if(wire) wire.visible = false;
+
+                    const oldMat = originalMaterials.get(child.uuid) || child.material;
+                    const toonMat = new THREE.MeshToonMaterial({
+                        color: oldMat.color ? oldMat.color : 0xffffff,
+                        map: oldMat.map || null,
+                        gradientMap: toonGradientTexture,
+                        side: THREE.DoubleSide
+                    });
+                    child.material = toonMat;
+                }
+            });
+        }
+
+        function applyWireframeOverlay() {
+            currentModel.traverse(child => {
+                if (child.isMesh) {
+                    if(originalMaterials.has(child.uuid)) {
+                        child.material = originalMaterials.get(child.uuid);
+                    }
+                    let wire = child.children.find(c => c.name === '__wireframe_overlay');
+                    if (!wire) {
+                        const wireGeo = new THREE.WireframeGeometry(child.geometry);
+                        const wireMat = new THREE.LineBasicMaterial({ color: 0xbef264, linewidth: 1 });
+                        wire = new THREE.LineSegments(wireGeo, wireMat);
+                        wire.name = '__wireframe_overlay';
+                        wire.scale.setScalar(1.001); 
+                        child.add(wire);
+                    }
+                    wire.visible = true;
+                }
+            });
+        }
+
+        function updateOverlayText() {
+            const asset = document.getElementById('input-asset-name').value;
+            const persona = document.getElementById('input-persona-name').value;
+            document.getElementById('status-msg').innerText = `DATA: ${asset} // ${persona}`;
+        }
+
+        function onResize() {
+            if (!container3D || !camera || !renderer) return;
+            
+            const w = container3D.clientWidth;
+            const h = container3D.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            composer.setSize(w, h);
+
+            const wb = window.innerWidth;
+            const hb = window.innerHeight;
+            bgCamera.aspect = wb / hb;
+            bgCamera.updateProjectionMatrix();
+            bgRenderer.setSize(wb, hb);
+        }
+
+        function bindInputs() {
+            const sc = document.getElementById('inp-scale');
+            const off = document.getElementById('inp-offset');
+            
+            sc.oninput = (e) => {
+                settings.scale = parseFloat(e.target.value);
+                document.getElementById('val-scale').innerText = settings.scale.toFixed(1);
+                updateTransform();
+            };
+            off.oninput = (e) => {
+                settings.offset = parseFloat(e.target.value);
+                document.getElementById('val-offset').innerText = settings.offset.toFixed(1);
+                updateTransform();
+            };
+        }
+
+        function updateTransform() {
+            if(!currentModel) return;
+            currentModel.scale.setScalar(settings.scale);
+            currentModel.position.y = settings.offset;
+        }
+
+        async function loadDemo() {
+            showLoader(true);
+            await loadModel('https://threejs.org/examples/models/gltf/Soldier.glb', 'SOLDIER_DEMO.glb');
+            showLoader(false);
+        }
+
+        function handleAssetUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            showLoader(true);
+            const url = URL.createObjectURL(file);
+            loadModel(url, file.name);
+        }
+
+        async function loadModel(url, name) {
+            activeFileName = name;
+            const cleanName = name.toUpperCase().replace(/\.[^/.]+$/, "");
+            document.getElementById('model-name-display').innerText = cleanName;
+            document.getElementById('input-asset-name').value = cleanName;
+            updateOverlayText();
+            document.getElementById('btn-export').classList.remove('hidden');
+
+            const ext = name.split('.').pop().toLowerCase();
+            let object;
+
+            try {
+                if (ext === 'fbx') {
+                    const loader = new THREE.FBXLoader();
+                    object = await new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
+                } else {
+                    const loader = new THREE.GLTFLoader();
+                    const draco = new THREE.DRACOLoader();
+                    draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.4.1/');
+                    loader.setDRACOLoader(draco);
+                    const gltf = await new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
+                    object = gltf.scene;
+                    animations = gltf.animations;
+                }
+
+                if (ext === 'fbx') animations = object.animations;
+
+                if (currentModel) scene.remove(currentModel);
+                currentModel = object;
+
+                originalMaterials.clear();
+                currentModel.traverse(child => {
+                    if(child.isMesh) {
+                        originalMaterials.set(child.uuid, child.material);
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                const box = new THREE.Box3().setFromObject(currentModel);
+                const size = box.getSize(new THREE.Vector3());
+                const center = box.getCenter(new THREE.Vector3());
+                
+                currentModel.position.set(-center.x, -box.min.y, -center.z);
+                
+                settings.scale = 1.0;
+                settings.offset = 0.0;
+                document.getElementById('inp-scale').value = 1.0;
+                document.getElementById('inp-offset').value = 0.0;
+                document.getElementById('val-scale').innerText = "1.0";
+                document.getElementById('val-offset').innerText = "0.0";
+
+                setRenderMode('pbr');
+
+                scene.add(currentModel);
+                mixer = new THREE.AnimationMixer(currentModel);
+
+                let verts = 0;
+                currentModel.traverse(o => { if(o.isMesh) verts += o.geometry.attributes.position.count; });
+                document.getElementById('poly-count').innerText = verts.toLocaleString();
+                document.getElementById('clip-count').innerText = animations.length;
+
+                updateLibraryUI();
+                resetSlots();
+                showLoader(false);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('status-msg').innerText = "ERROR LOADING ASSET";
+                showLoader(false);
+            }
+        }
+
+        function setupScanShader(model) {
+            const box = new THREE.Box3().setFromObject(model);
+            scanUniforms.uScanMin.value = box.min.y;
+            scanUniforms.uScanMax.value = box.max.y;
+
+            model.traverse(child => {
+                if (child.isMesh && child.material) {
+                    const materials = Array.isArray(child.material) ? child.material : [child.material];
+                    materials.forEach(mat => {
+                        mat.onBeforeCompile = (shader) => {
+                            shader.uniforms.uTime = scanUniforms.uTime;
+                            shader.uniforms.uScanColor = scanUniforms.uScanColor;
+                            shader.uniforms.uScanMin = scanUniforms.uScanMin;
+                            shader.uniforms.uScanMax = scanUniforms.uScanMax;
+
+                            shader.vertexShader = `
+                                varying vec3 vWorldPosition;
+                                ${shader.vertexShader}
+                            `.replace(
+                                '#include <worldpos_vertex>',
+                                `
+                                #include <worldpos_vertex>
+                                vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                                `
+                            );
+
+                            shader.fragmentShader = `
+                                uniform float uTime;
+                                uniform vec3 uScanColor;
+                                uniform float uScanMin;
+                                uniform float uScanMax;
+                                varying vec3 vWorldPosition;
+                                ${shader.fragmentShader}
+                            `.replace(
+                                '#include <dithering_fragment>',
+                                `
+                                #include <dithering_fragment>
+                                
+                                float scanRange = uScanMax - uScanMin;
+                                float speed = 1.5;
+                                float scanPos = uScanMin + (sin(uTime * speed) * 0.5 + 0.5) * scanRange;
+                                
+                                float dist = abs(vWorldPosition.y - scanPos);
+                                float scanWidth = 0.05 + 0.1 * (sin(uTime * 5.0) * 0.5 + 0.5); 
+                                float intensity = smoothstep(scanWidth, 0.0, dist);
+                                
+                                gl_FragColor.rgb += uScanColor * intensity * 0.8;
+                                `
+                            );
+                        };
+                        mat.needsUpdate = true;
+                    });
+                }
+            });
+        }
+
+        function updateLibraryUI() {
+            const container = document.getElementById('library-list');
+            container.innerHTML = '';
+            animations.forEach((clip, idx) => {
+                const div = document.createElement('div');
+                div.className = "text-[9px] text-[#888] bg-black/20 p-1 border border-[#222] hover:bg-[#222] hover:text-[#eee] cursor-pointer flex justify-between";
+                div.innerHTML = `<span class="truncate w-32">${clip.name}</span> <span class="text-[#444]">${clip.duration.toFixed(1)}s</span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function initSlotsUI() {
+            const container = document.getElementById('slots-wrapper');
+            container.innerHTML = '';
+            for(let i=0; i<4; i++) {
+                const el = document.createElement('div');
+                el.className = "slot-row";
+                el.dataset.id = i;
+                el.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[9px] font-bold text-[#666]">CH 0${i+1}</span>
+                        <div class="relative">
+                            <button onclick="toggleDrop(${i})" class="btn-industrial text-[8px] py-1 px-2 w-24 truncate" id="btn-slot-${i}">SELECT CLIP</button>
+                            <div id="drop-slot-${i}" class="dropdown-menu custom-scrollbar"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 opacity-30 pointer-events-none transition-opacity" id="controls-slot-${i}">
+                        <input type="range" class="slider-industrial flex-1" min="0" max="1" step="0.01" value="0" oninput="updateMix(${i}, this.value)">
+                        <span class="text-[9px] font-mono text-[#888] w-6 text-right" id="val-mix-${i}">0%</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            }
+        }
+
+        window.toggleDrop = function(id) {
+            document.querySelectorAll('.dropdown-menu').forEach(d => {
+                if(d.id !== `drop-slot-${id}`) d.classList.remove('show');
+            });
+            const drop = document.getElementById(`drop-slot-${id}`);
+            if(drop.classList.contains('show')) {
+                drop.classList.remove('show');
+                return;
+            }
+            drop.innerHTML = '';
+            if(animations.length === 0) {
+                drop.innerHTML = '<div class="p-2 text-[9px] text-[#555]">NO CLIPS LOADED</div>';
+            } else {
+                animations.forEach((clip, idx) => {
+                    const item = document.createElement('div');
+                    item.className = "dropdown-item";
+                    item.innerText = clip.name;
+                    item.onclick = () => assignClip(id, idx);
+                    drop.appendChild(item);
+                });
+            }
+            drop.classList.add('show');
+        }
+
+        function assignClip(slotId, clipIdx) {
+            const clip = animations[clipIdx];
+            if(!clip) return;
+            if(slotActions[slotId]) slotActions[slotId].stop();
+            const action = mixer.clipAction(clip);
+            action.enabled = true;
+            action.setEffectiveWeight(1.0);
+            action.play();
+            slotActions[slotId] = action;
+            document.getElementById(`btn-slot-${slotId}`).innerText = clip.name;
+            document.getElementById(`drop-slot-${slotId}`).classList.remove('show');
+            const controls = document.getElementById(`controls-slot-${slotId}`);
+            controls.classList.remove('opacity-30', 'pointer-events-none');
+            controls.querySelector('input').value = 1.0;
+            document.getElementById(`val-mix-${slotId}`).innerText = "100%";
+        }
+
+        window.updateMix = function(slotId, val) {
+            const weight = parseFloat(val);
+            document.getElementById(`val-mix-${slotId}`).innerText = Math.round(weight*100) + "%";
+            if(slotActions[slotId]) {
+                slotActions[slotId].setEffectiveWeight(weight);
+            }
+        }
+
+        function resetSlots() {
+            slotActions = [null, null, null, null];
+            initSlotsUI();
+        }
+
+        function exportConfig() {
+            if(!activeFileName || activeFileName === 'NONE') return;
+            const data = {
+                persona: document.getElementById('input-persona-name').value,
+                asset: document.getElementById('input-asset-name').value,
+                settings: settings,
+                slots: []
+            };
+            slotActions.forEach((act, i) => {
+                if(act) {
+                    const clipName = act.getClip().name;
+                    const weight = act.getEffectiveWeight();
+                    data.slots.push({ index: i, clip: clipName, weight: weight });
+                }
+            });
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `LOGICWORKX_${activeFileName.split('.')[0]}.json`;
+            link.click();
+        }
+
+        function handleConfigUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    applyConfig(data);
+                } catch(err) {
+                    alert("Invalid JSON");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function applyConfig(data) {
+            settings.scale = data.settings.scale || 1;
+            settings.offset = data.settings.offset || 0;
+            document.getElementById('inp-scale').value = settings.scale;
+            document.getElementById('inp-offset').value = settings.offset;
+            document.getElementById('val-scale').innerText = settings.scale.toFixed(1);
+            document.getElementById('val-offset').innerText = settings.offset.toFixed(1);
+            document.getElementById('input-asset-name').value = data.asset || "DIGITAL ASSET";
+            document.getElementById('input-persona-name').value = data.persona || "PERSONA";
+            updateOverlayText();
+            updateTransform();
+            data.slots.forEach(s => {
+                const clipIdx = animations.findIndex(a => a.name === s.clip);
+                if(clipIdx >= 0) {
+                    assignClip(s.index, clipIdx);
+                    updateMix(s.index, s.weight);
+                    const slider = document.querySelector(`#controls-slot-${s.index} input`);
+                    if(slider) slider.value = s.weight;
+                }
+            });
+            document.getElementById('status-msg').innerText = "CONFIG LOADED";
+        }
+
+        function showLoader(visible) {
+            const el = document.getElementById('loader-overlay');
+            el.style.display = visible ? 'flex' : 'none';
+            el.style.opacity = visible ? '1' : '0';
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            
+            if (mixer) mixer.update(delta);
+            if (controls) controls.update();
+
+            scanUniforms.uTime.value = clock.getElapsedTime();
+            
+            // Render Main (with Bloom)
+            if(composer) composer.render();
+            else renderer.render(scene, camera);
+
+            // Render Background (Blurred)
+            if(bgRenderer) {
+                if(currentModel) bgCamera.lookAt(0, 1, 0); 
+                bgRenderer.render(scene, bgCamera);
+            }
+        }
+
+        window.onload = init;
+
+        window.onclick = function(e) {
+            if(!e.target.matches('.btn-industrial')) {
+                document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('show'));
+            }
+        }
+
+    </script>
+</body>
+</html>
