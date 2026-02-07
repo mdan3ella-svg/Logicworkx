@@ -6,12 +6,12 @@
     <title>LOGICWORKX | DIGITAL ASSET CONFIGURATOR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 
         /* --- Industrial Theme Setup --- */
         :root {
-            --bg-base: #0a0a0a;
-            --panel-bg: #111;
+            --bg-base: #050505;
+            --panel-bg: #0a0a0a;
             --border-color: #222;
             
             /* Lime Green Theme Palette */
@@ -245,12 +245,100 @@
         }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; animation: green-pulse 2s infinite; }
 
+        /* --- Manual / Loader Styling --- */
+        #loader-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: #030303;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .manual-card {
+            width: 700px; max-width: 90%;
+            background: #0a0a0a; border: 1px solid #333;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column;
+        }
+        .manual-header {
+            background: #111; border-bottom: 1px solid #333; padding: 12px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .manual-content {
+            padding: 20px;
+            max-height: 50vh; overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: #888;
+        }
+        .manual-content h3 { color: var(--lime-mid); font-weight: 700; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .manual-content strong { color: #ccc; }
+        .manual-content li { margin-bottom: 4px; padding-left: 10px; border-left: 2px solid #333; }
+        
+        .manual-footer {
+            border-top: 1px solid #333; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center; background: #080808;
+        }
+        .btn-enter {
+            background: var(--lime-mid); color: #000; font-weight: 900;
+            padding: 10px 24px; font-size: 11px; letter-spacing: 0.1em;
+            border: none; cursor: pointer; transition: 0.2s;
+        }
+        .btn-enter:hover { background: var(--lime-glow); box-shadow: 0 0 15px var(--lime-mid); }
+        .btn-enter:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow: none; }
+
     </style>
 </head>
 <body>
 
     <!-- Background Renderer Canvas -->
     <canvas id="bg-canvas"></canvas>
+
+    <!-- LOADING / MANUAL SCREEN -->
+    <div id="loader-overlay">
+        <div class="manual-card">
+            <div class="manual-header">
+                <span class="header-text">LOGICWORKX | TECHNICAL MANUAL v1.0</span>
+                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse" id="boot-status-dot"></div>
+            </div>
+            <div class="manual-content custom-scrollbar">
+                <div style="color: var(--lime-dim); margin-bottom: 10px;">// SYSTEM PROTOCOLS INITIATED...</div>
+                
+                <h3>01. Interface Navigation</h3>
+                <ul>
+                    <li><strong>Rotate:</strong> Left Mouse Button + Drag</li>
+                    <li><strong>Pan:</strong> Right Mouse Button + Drag</li>
+                    <li><strong>Zoom:</strong> Mouse Wheel Scroll</li>
+                    <li><strong>Magnified View:</strong> Background reflects real-time asset position</li>
+                </ul>
+
+                <h3>02. Asset Pipeline</h3>
+                <ul>
+                    <li><strong>Import:</strong> Supports .GLB, .GLTF, .FBX formats.</li>
+                    <li><strong>Normalization:</strong> Assets are auto-scaled to fit the viewport 1m unit cube.</li>
+                    <li><strong>Animations:</strong> All NLA tracks are auto-extracted to the Library.</li>
+                </ul>
+
+                <h3>03. NLA Mixer Engine</h3>
+                <ul>
+                    <li><strong>Channels:</strong> 4 Independent blending slots.</li>
+                    <li><strong>Operation:</strong> Select a clip from the Library dropdown for any channel.</li>
+                    <li><strong>Weight:</strong> Adjust slider to blend between layers (0.0 - 1.0).</li>
+                </ul>
+
+                <h3>04. Render & Environment</h3>
+                <ul>
+                    <li><strong>PBR Mode:</strong> Physically correct lighting with Scan Line shader.</li>
+                    <li><strong>Toon Mode:</strong> Non-Photorealistic gradient cell shading.</li>
+                    <li><strong>Wire Mode:</strong> Topology analysis overlay.</li>
+                    <li><strong>Environment:</strong> Toggle Studio/Cyber or Load Custom HDRI/EXR.</li>
+                </ul>
+                
+                <br>
+                <div style="color: var(--lime-dim);">// END OF DOCUMENTATION</div>
+            </div>
+            <div class="manual-footer">
+                <span id="loader-text" class="text-[10px] font-mono text-white animate-pulse">INITIALIZING CORE SYSTEMS...</span>
+                <button id="btn-enter" class="btn-enter" disabled>SYSTEM LOADING...</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Header Strip -->
     <header class="w-full h-10 flex items-center justify-between px-6 border-b border-[#222] bg-[#0d0d0d] z-10">
@@ -261,7 +349,10 @@
             <span class="text-[#333]">/</span>
             <input type="text" id="input-persona-name" class="header-input" value="PERSONA" placeholder="PERSONA ID">
         </div>
-        <div class="header-text" style="font-size: 10px; opacity: 0.8; letter-spacing: 0.2em;">MAGNIFIED VIEWER</div>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleManual()" class="text-[9px] font-bold text-[#555] hover:text-[#fff] border border-[#333] hover:border-[#fff] px-2 py-1 transition-colors">MANUAL</button>
+            <div class="header-text" style="font-size: 10px; opacity: 0.8; letter-spacing: 0.2em;">MAGNIFIED VIEWER</div>
+        </div>
     </header>
 
     <!-- Side Decor -->
@@ -286,11 +377,6 @@
                 
                 <div class="absolute bottom-6 left-0 w-full text-center pointer-events-none z-20">
                     <span class="label-panel" style="text-shadow: 0 2px 4px #000;">ROTATING ASSET DISPLAY: <span id="model-name-display" style="color: var(--lime-glow);">NONE</span></span>
-                </div>
-
-                <div id="loader-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-[#000] z-30 transition-opacity duration-500">
-                    <div class="w-6 h-6 border-2 border-[#222] border-t-[var(--lime-mid)] rounded-full animate-spin mb-3"></div>
-                    <span class="label-sm" style="color: var(--lime-mid);">INITIALIZING</span>
                 </div>
             </div>
         </section>
@@ -443,7 +529,7 @@
         let toonGradientTexture = null;
         
         // Environment vars
-        let envMode = 'studio'; // or 'cyber' or 'custom'
+        let envMode = 'studio'; 
         let pmremGenerator;
         let roomEnvironmentTexture;
         let cyberEnvironmentTexture;
@@ -490,7 +576,7 @@
             
             bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0;
-            bloomPass.strength = 1.5; // Default High
+            bloomPass.strength = 1.5; 
             bloomPass.radius = 0.5;
 
             composer = new THREE.EffectComposer(renderer);
@@ -501,17 +587,11 @@
             pmremGenerator = new THREE.PMREMGenerator(renderer);
             pmremGenerator.compileEquirectangularShader();
             
-            // 1. Studio Room
             const roomEnvironment = new THREE.RoomEnvironment();
             roomEnvironmentTexture = pmremGenerator.fromScene(roomEnvironment).texture;
-            
-            // 2. Cyber Procedural Skybox
             createCyberEnvironment();
-
-            // Set Default Env
             scene.environment = roomEnvironmentTexture;
 
-            // Generate Toon Gradient
             toonGradientTexture = generateToonGradient();
 
             // --- Background Renderer ---
@@ -562,6 +642,7 @@
             document.getElementById('btn-env-load').onclick = () => document.getElementById('file-in-env').click();
             document.getElementById('btn-export').onclick = exportConfig;
             document.getElementById('btn-demo').onclick = loadDemo;
+            document.getElementById('btn-enter').onclick = enterSystem;
             
             document.getElementById('file-in-asset').onchange = handleAssetUpload;
             document.getElementById('file-in-config').onchange = handleConfigUpload;
@@ -574,10 +655,30 @@
             initSlotsUI();
             animate();
             
+            // Initialization Sequence
             setTimeout(() => {
-                document.getElementById('loader-overlay').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 500);
-            }, 1000);
+                document.getElementById('loader-text').innerText = "SYSTEM READY";
+                document.getElementById('loader-text').classList.remove('animate-pulse');
+                document.getElementById('loader-text').style.color = "var(--lime-mid)";
+                const btn = document.getElementById('btn-enter');
+                btn.disabled = false;
+                btn.innerText = "ACCESS TERMINAL";
+                
+                document.getElementById('boot-status-dot').classList.remove('bg-red-500');
+                document.getElementById('boot-status-dot').classList.add('bg-green-500');
+            }, 1500);
+        }
+
+        /* --- Manual / Loader Logic --- */
+        function enterSystem() {
+            document.getElementById('loader-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 500);
+        }
+
+        window.toggleManual = function() {
+            const el = document.getElementById('loader-overlay');
+            el.style.display = 'flex';
+            setTimeout(() => el.style.opacity = '1', 10);
         }
 
         /* --- Environment Logic --- */
@@ -585,11 +686,9 @@
             const envScene = new THREE.Scene();
             envScene.background = new THREE.Color(0x050505);
             
-            // Grid Floor
             const grid = new THREE.GridHelper(20, 40, 0x00ff00, 0x004400);
             envScene.add(grid);
             
-            // Distant Lights
             const light1 = new THREE.PointLight(0x00ffcc, 2, 100);
             light1.position.set(10, 10, 10);
             envScene.add(light1);
@@ -606,15 +705,12 @@
             if(envMode === 'studio') {
                 envMode = 'cyber';
                 scene.environment = cyberEnvironmentTexture;
-                // Optional: Change background color slightly to match
-                // scene.background = new THREE.Color(0x020205);
                 btn.innerText = "CYBER";
                 btn.style.color = "var(--lime-glow)";
                 btn.style.borderColor = "var(--lime-glow)";
             } else {
                 envMode = 'studio';
                 scene.environment = roomEnvironmentTexture;
-                // scene.background = null; // Transparent
                 btn.innerText = "STUDIO";
                 btn.style.color = "#888";
                 btn.style.borderColor = "#333";
@@ -676,7 +772,6 @@
             });
         };
 
-        // --- Toon Gradient Generator ---
         function generateToonGradient() {
             const canvas = document.createElement('canvas');
             canvas.width = 4;
@@ -694,7 +789,6 @@
             return texture;
         }
 
-        // --- Mode Switching Logic ---
         window.setRenderMode = function(mode) {
             currentMode = mode;
             ['pbr', 'toon', 'wire'].forEach(m => {
@@ -720,7 +814,6 @@
                 if (child.isMesh) {
                     if(originalMaterials.has(child.uuid)) {
                         child.material = originalMaterials.get(child.uuid);
-                        // Re-apply environment intensity
                         child.material.envMapIntensity = settings.envIntensity;
                     }
                     const wire = child.children.find(c => c.name === '__wireframe_overlay');
@@ -813,15 +906,12 @@
         }
 
         async function loadDemo() {
-            showLoader(true);
             await loadModel('https://threejs.org/examples/models/gltf/Soldier.glb', 'SOLDIER_DEMO.glb');
-            showLoader(false);
         }
 
         function handleAssetUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
-            showLoader(true);
             const url = URL.createObjectURL(file);
             loadModel(url, file.name);
         }
@@ -866,9 +956,7 @@
                 });
 
                 const box = new THREE.Box3().setFromObject(currentModel);
-                const size = box.getSize(new THREE.Vector3());
                 const center = box.getCenter(new THREE.Vector3());
-                
                 currentModel.position.set(-center.x, -box.min.y, -center.z);
                 
                 settings.scale = 1.0;
@@ -890,12 +978,10 @@
 
                 updateLibraryUI();
                 resetSlots();
-                showLoader(false);
 
             } catch (err) {
                 console.error(err);
                 document.getElementById('status-msg').innerText = "ERROR LOADING ASSET";
-                showLoader(false);
             }
         }
 
@@ -1104,12 +1190,6 @@
             document.getElementById('status-msg').innerText = "CONFIG LOADED";
         }
 
-        function showLoader(visible) {
-            const el = document.getElementById('loader-overlay');
-            el.style.display = visible ? 'flex' : 'none';
-            el.style.opacity = visible ? '1' : '0';
-        }
-
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
@@ -1119,11 +1199,9 @@
 
             scanUniforms.uTime.value = clock.getElapsedTime();
             
-            // Render Main (with Bloom)
             if(composer) composer.render();
             else renderer.render(scene, camera);
 
-            // Render Background (Blurred)
             if(bgRenderer) {
                 if(currentModel) bgCamera.lookAt(0, 1, 0); 
                 bgRenderer.render(scene, bgCamera);
