@@ -19,7 +19,10 @@
             --lime-mid: #84cc16;    /* Base accent */
             --lime-dim: #4d7c0f;    /* Borders/Muted */
             --lime-dark: #365314;   /* Backgrounds */
-            --text-muted: #575757;
+            
+            /* Visibility Updates */
+            --text-vivid: #ffffff;
+            --text-faded-lime: #d9f99d;
             --hud-corner-size: 30px;
         }
 
@@ -47,7 +50,7 @@
             transform: scale(1.1);
         }
 
-        /* --- Typography & Labels --- */
+        /* --- Typography & Labels (VISIBILITY ENHANCED) --- */
         .header-text { 
             font-weight: 900; 
             letter-spacing: 0.05em; 
@@ -55,14 +58,14 @@
             background: linear-gradient(90deg, #ecfccb 0%, #84cc16 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0px 0px 10px rgba(132, 204, 22, 0.3);
+            text-shadow: 0px 0px 15px rgba(132, 204, 22, 0.6);
         }
         
         .header-input {
             background: transparent;
             border: none;
-            border-bottom: 1px solid var(--lime-dim);
-            color: var(--lime-glow);
+            border-bottom: 1px solid var(--lime-mid);
+            color: #fff; /* Vivid White */
             font-size: 14px;
             font-weight: 700;
             letter-spacing: 0.05em;
@@ -71,22 +74,31 @@
             outline: none;
             transition: all 0.2s;
             padding: 0;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
         }
         .header-input:focus, .header-input:hover {
             border-bottom-color: var(--lime-glow);
-            color: #fff;
+            color: var(--lime-glow);
             text-shadow: 0 0 8px var(--lime-mid);
         }
         .header-input::placeholder { color: var(--lime-dim); }
 
-        .label-panel { font-size: 11px; font-weight: 700; color: var(--lime-mid); letter-spacing: 0.05em; text-transform: uppercase; }
-        .label-sm { font-size: 9px; font-weight: 600; letter-spacing: 0.15em; color: #556; text-transform: uppercase; }
+        .label-panel { font-size: 11px; font-weight: 700; color: var(--lime-mid); letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 0 5px rgba(132, 204, 22, 0.2); }
+        
+        /* Visibility Boost for Small Labels */
+        .label-sm { 
+            font-size: 9px; 
+            font-weight: 700; 
+            letter-spacing: 0.15em; 
+            color: var(--text-faded-lime); /* Faded Lime Pop */
+            text-transform: uppercase; 
+        }
         
         .vertical-text-right {
             position: absolute; right: 20px; top: 120px;
             writing-mode: vertical-rl; text-orientation: mixed;
             font-size: 12px; font-weight: 700; letter-spacing: 0.2em;
-            color: var(--lime-dark); user-select: none; z-index: -1;
+            color: var(--lime-dim); user-select: none; z-index: -1;
         }
         
         .vertical-text-left {
@@ -94,7 +106,7 @@
             writing-mode: vertical-rl; text-orientation: mixed;
             transform: rotate(180deg);
             font-size: 42px; font-weight: 900; letter-spacing: 0.05em;
-            color: rgba(132, 204, 22, 0.05); text-shadow: none; user-select: none;
+            color: rgba(255,255,255,0.05); text-shadow: none; user-select: none;
             line-height: 1; z-index: -1;
         }
 
@@ -123,7 +135,7 @@
             position: relative;
             width: 100%;
             height: 100%;
-            filter: drop-shadow(0 0 10px rgba(132, 204, 22, 0.1));
+            filter: drop-shadow(0 0 15px rgba(132, 204, 22, 0.2));
         }
 
         #container-3d-border {
@@ -169,12 +181,13 @@
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 40px; height: 40px;
-            border: 1px solid rgba(132, 204, 22, 0.3);
+            border: 1px solid rgba(132, 204, 22, 0.5);
             pointer-events: none;
             z-index: 20;
+            box-shadow: 0 0 10px rgba(132, 204, 22, 0.2);
         }
         .hud-reticle::before, .hud-reticle::after {
-            content: ''; position: absolute; background: rgba(132, 204, 22, 0.5);
+            content: ''; position: absolute; background: rgba(132, 204, 22, 0.8);
         }
         .hud-reticle::before { width: 100%; height: 1px; top: 50%; left: 0; }
         .hud-reticle::after { width: 1px; height: 100%; top: 0; left: 50%; }
@@ -185,7 +198,7 @@
         /* --- Thinner Control Panel --- */
         #container-controls {
             height: 100%;
-            background: rgba(15, 15, 15, 0.9);
+            background: rgba(15, 15, 15, 0.95);
             backdrop-filter: blur(10px);
             padding: 1rem;
             border-left: 1px solid rgba(132, 204, 22, 0.1);
@@ -198,24 +211,24 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--lime-dark); border-radius: 3px; }
 
         .btn-industrial {
-            background: rgba(132, 204, 22, 0.05); border: 1px solid var(--lime-dark); color: #888;
+            background: rgba(132, 204, 22, 0.05); border: 1px solid var(--lime-dim); color: #fff;
             font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
             padding: 6px 10px; transition: all 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 6px;
             width: 100%;
         }
-        .btn-industrial:hover { background: var(--lime-dark); border-color: var(--lime-mid); color: #fff; box-shadow: 0 0 10px rgba(132, 204, 22, 0.2); }
+        .btn-industrial:hover { background: var(--lime-dark); border-color: var(--lime-mid); color: var(--lime-glow); box-shadow: 0 0 10px rgba(132, 204, 22, 0.2); }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 1rem; }
         
         .btn-mode { 
-            background: #0a0a0a; border: 1px solid #333; color: #666;
+            background: #0a0a0a; border: 1px solid #333; color: #888;
             font-size: 8px; font-weight: 700; padding: 4px; cursor: pointer; text-transform: uppercase;
             transition: all 0.2s;
         }
-        .btn-mode.active { background: var(--lime-mid); color: #000; border-color: var(--lime-glow); font-weight: 900; }
+        .btn-mode.active { background: var(--lime-mid); color: #000; border-color: var(--lime-glow); font-weight: 900; box-shadow: 0 0 8px var(--lime-dim); }
 
         .slider-industrial {
-            -webkit-appearance: none; width: 100%; height: 2px; background: #222; outline: none; margin-top: 8px; margin-bottom: 8px;
+            -webkit-appearance: none; width: 100%; height: 2px; background: #333; outline: none; margin-top: 8px; margin-bottom: 8px;
         }
         .slider-industrial::-webkit-slider-thumb {
             -webkit-appearance: none; width: 8px; height: 8px; background: var(--lime-mid); border-radius: 0; cursor: pointer; transition: 0.2s;
@@ -223,7 +236,7 @@
         .slider-industrial::-webkit-slider-thumb:hover { background: var(--lime-glow); transform: scale(1.5); box-shadow: 0 0 5px var(--lime-glow); }
 
         .slot-row {
-            background: rgba(0,0,0,0.3); border-bottom: 1px solid #222;
+            background: rgba(255,255,255,0.02); border-bottom: 1px solid #222;
             transition: all 0.2s; border-left: 2px solid transparent;
             padding: 8px;
         }
@@ -233,11 +246,11 @@
         .hidden-input { display: none; }
         .dropdown-menu { display: none; position: absolute; background: #0f0f0f; border: 1px solid var(--lime-dark); z-index: 50; width: 100%; max-height: 200px; overflow-y: auto; top: 100%; left: 0; }
         .dropdown-menu.show { display: block; }
-        .dropdown-item { padding: 6px 8px; font-size: 9px; color: #888; cursor: pointer; border-bottom: 1px solid #222; }
+        .dropdown-item { padding: 6px 8px; font-size: 9px; color: #ccc; cursor: pointer; border-bottom: 1px solid #222; }
         .dropdown-item:hover { background: var(--lime-dark); color: var(--lime-glow); }
 
-        .stat-box { background: rgba(0,0,0,0.3); border: 1px solid #222; padding: 6px; text-align: center; }
-        .stat-val { font-family: monospace; font-size: 10px; color: var(--lime-glow); font-weight: 700; }
+        .stat-box { background: rgba(0,0,0,0.3); border: 1px solid #333; padding: 6px; text-align: center; }
+        .stat-val { font-family: monospace; font-size: 10px; color: var(--lime-glow); font-weight: 700; text-shadow: 0 0 5px var(--lime-dark); }
 
         @keyframes green-pulse {
             0%, 100% { background-color: var(--lime-mid); box-shadow: 0 0 5px var(--lime-mid); }
@@ -265,10 +278,10 @@
         .manual-content {
             padding: 20px;
             max-height: 50vh; overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: #888;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: #aaa;
         }
         .manual-content h3 { color: var(--lime-mid); font-weight: 700; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .manual-content strong { color: #ccc; }
+        .manual-content strong { color: #fff; }
         .manual-content li { margin-bottom: 4px; padding-left: 10px; border-left: 2px solid #333; }
         
         .manual-footer {
@@ -350,7 +363,7 @@
             <input type="text" id="input-persona-name" class="header-input" value="PERSONA" placeholder="PERSONA ID">
         </div>
         <div class="flex items-center gap-4">
-            <button onclick="toggleManual()" class="text-[9px] font-bold text-[#555] hover:text-[#fff] border border-[#333] hover:border-[#fff] px-2 py-1 transition-colors">MANUAL</button>
+            <button onclick="toggleManual()" class="text-[9px] font-bold text-[#aaa] hover:text-[#fff] border border-[#444] hover:border-[#fff] px-2 py-1 transition-colors">MANUAL</button>
             <div class="header-text" style="font-size: 10px; opacity: 0.8; letter-spacing: 0.2em;">MAGNIFIED VIEWER</div>
         </div>
     </header>
@@ -403,15 +416,15 @@
                 <div class="bg-black/20 p-2 border border-[#222]">
                     <div class="flex justify-between items-center mb-2">
                         <span class="label-sm">ENVIRONMENT & FX</span>
-                        <button onclick="toggleEnvMode()" id="btn-env-mode" class="text-[8px] font-bold px-2 py-0.5 bg-[#222] text-[#888] hover:text-white rounded border border-[#333]">STUDIO</button>
+                        <button onclick="toggleEnvMode()" id="btn-env-mode" class="text-[8px] font-bold px-2 py-0.5 bg-[#222] text-[#ccc] hover:text-white rounded border border-[#333]">STUDIO</button>
                     </div>
                     
                     <div class="flex justify-between items-center mt-1">
-                        <span class="text-[8px] text-[#555] font-mono">BLOOM</span>
+                        <span class="text-[8px] text-[#ccc] font-mono">BLOOM</span>
                         <input type="range" class="slider-industrial w-20" min="0" max="3" step="0.1" value="1.5" oninput="updateBloom(this.value)">
                     </div>
                     <div class="flex justify-between items-center mt-1">
-                        <span class="text-[8px] text-[#555] font-mono">ENV INT</span>
+                        <span class="text-[8px] text-[#ccc] font-mono">ENV INT</span>
                         <input type="range" class="slider-industrial w-20" min="0" max="2" step="0.1" value="1.0" oninput="updateEnvIntensity(this.value)">
                     </div>
                     <div class="flex gap-1 mt-2">
@@ -445,13 +458,13 @@
                 <div class="bg-black/20 p-2 border border-[#222]">
                     <div class="flex justify-between items-center">
                         <span class="label-sm">SCALE</span>
-                        <span id="val-scale" class="text-[9px] font-mono text-[#888]">1.0</span>
+                        <span id="val-scale" class="text-[9px] font-mono text-[#fff]">1.0</span>
                     </div>
                     <input type="range" id="inp-scale" class="slider-industrial" min="0.1" max="3.0" step="0.1" value="1.0">
                     
                     <div class="flex justify-between items-center mt-2">
                         <span class="label-sm">OFFSET Y</span>
-                        <span id="val-offset" class="text-[9px] font-mono text-[#888]">0.0</span>
+                        <span id="val-offset" class="text-[9px] font-mono text-[#fff]">0.0</span>
                     </div>
                     <input type="range" id="inp-offset" class="slider-industrial" min="-5" max="5" step="0.1" value="0">
                 </div>
@@ -463,7 +476,7 @@
                     </div>
                     <div id="library-list" class="flex-1 overflow-y-auto custom-scrollbar p-1 space-y-1">
                         <!-- Items injected here -->
-                        <div class="text-[9px] text-[#444] italic p-2 text-center">Empty Library</div>
+                        <div class="text-[9px] text-[#555] italic p-2 text-center">Empty Library</div>
                     </div>
                 </div>
 
@@ -481,7 +494,7 @@
 
             <!-- Footer Label inside Panel -->
             <div class="mt-4 pt-2 border-t border-[#222] flex justify-between items-center">
-                <span id="status-msg" class="text-[9px] font-mono text-[#888] truncate w-full" style="color: var(--lime-mid);">SYSTEM READY</span>
+                <span id="status-msg" class="text-[9px] font-mono text-[#fff] truncate w-full" style="color: var(--lime-mid);">SYSTEM READY</span>
             </div>
 
         </section>
@@ -533,6 +546,9 @@
         let pmremGenerator;
         let roomEnvironmentTexture;
         let cyberEnvironmentTexture;
+        
+        // Floor Scan vars
+        let floorScanMesh;
 
         const settings = {
             scale: 1.0,
@@ -602,6 +618,57 @@
             bgRenderer.outputEncoding = THREE.sRGBEncoding;
             bgCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
             bgCamera.position.set(1.5, 1, 2.5);
+
+            // --- Floor Scan Effect ---
+            const scanGeo = new THREE.PlaneGeometry(60, 60);
+            scanGeo.rotateX(-Math.PI / 2);
+            const scanMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uColor: { value: new THREE.Color(0x84cc16) }
+                },
+                vertexShader: `
+                    varying vec3 vWorldPos;
+                    void main() {
+                        vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uColor;
+                    varying vec3 vWorldPos;
+                    void main() {
+                        float dist = length(vWorldPos.xz);
+                        float radius = 20.0;
+                        float loop = mod(uTime * 4.0, radius); 
+                        float width = 0.3;
+                        
+                        // Circle pulse
+                        float alpha = smoothstep(width, 0.0, abs(dist - loop));
+                        
+                        // Grid lines
+                        float grid = step(0.98, fract(vWorldPos.x)) + step(0.98, fract(vWorldPos.z));
+                        
+                        // Fading out
+                        float fade = 1.0 - (dist / radius);
+                        alpha *= fade;
+                        
+                        // Combine pulse and faint grid
+                        float combined = alpha + (grid * 0.05 * fade);
+                        
+                        if(combined < 0.01) discard;
+                        gl_FragColor = vec4(uColor, combined * 0.4);
+                    }
+                `,
+                transparent: true,
+                depthWrite: false,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending
+            });
+            floorScanMesh = new THREE.Mesh(scanGeo, scanMat);
+            floorScanMesh.position.y = -0.01; 
+            scene.add(floorScanMesh);
 
             // --- Lighting ---
             const ambient = new THREE.AmbientLight(0xffffff, 0.2);
@@ -1046,8 +1113,8 @@
             container.innerHTML = '';
             animations.forEach((clip, idx) => {
                 const div = document.createElement('div');
-                div.className = "text-[9px] text-[#888] bg-black/20 p-1 border border-[#222] hover:bg-[#222] hover:text-[#eee] cursor-pointer flex justify-between";
-                div.innerHTML = `<span class="truncate w-32">${clip.name}</span> <span class="text-[#444]">${clip.duration.toFixed(1)}s</span>`;
+                div.className = "text-[9px] text-[#ccc] bg-black/20 p-1 border border-[#222] hover:bg-[#222] hover:text-[#fff] cursor-pointer flex justify-between";
+                div.innerHTML = `<span class="truncate w-32">${clip.name}</span> <span class="text-[#888]">${clip.duration.toFixed(1)}s</span>`;
                 container.appendChild(div);
             });
         }
@@ -1061,7 +1128,7 @@
                 el.dataset.id = i;
                 el.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-[9px] font-bold text-[#666]">CH 0${i+1}</span>
+                        <span class="text-[9px] font-bold text-[#888]">CH 0${i+1}</span>
                         <div class="relative">
                             <button onclick="toggleDrop(${i})" class="btn-industrial text-[8px] py-1 px-2 w-24 truncate" id="btn-slot-${i}">SELECT CLIP</button>
                             <div id="drop-slot-${i}" class="dropdown-menu custom-scrollbar"></div>
@@ -1069,7 +1136,7 @@
                     </div>
                     <div class="flex items-center gap-2 opacity-30 pointer-events-none transition-opacity" id="controls-slot-${i}">
                         <input type="range" class="slider-industrial flex-1" min="0" max="1" step="0.01" value="0" oninput="updateMix(${i}, this.value)">
-                        <span class="text-[9px] font-mono text-[#888] w-6 text-right" id="val-mix-${i}">0%</span>
+                        <span class="text-[9px] font-mono text-[#fff] w-6 text-right" id="val-mix-${i}">0%</span>
                     </div>
                 `;
                 container.appendChild(el);
@@ -1198,6 +1265,7 @@
             if (controls) controls.update();
 
             scanUniforms.uTime.value = clock.getElapsedTime();
+            if(floorScanMesh) floorScanMesh.material.uniforms.uTime.value = clock.getElapsedTime();
             
             if(composer) composer.render();
             else renderer.render(scene, camera);
